@@ -143,30 +143,37 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-bg w-full">
+    <div className="min-h-screen bg-gradient-to-br from-bg via-blue-50 to-purple-50 w-full">
       {/* Disclaimer Banner */}
       <DisclaimerBanner />
       
       {/* Main Content */}
-      <div className="w-full px-4 py-6 max-w-md mx-auto">
+      <div className="w-full px-6 py-8 max-w-lg mx-auto">
         
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="text-center mb-10">
+          <div className="mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg">
+              <Zap className="h-8 w-8 text-white" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
             Shmoo Clicker
           </h1>
-          <p className="text-sm text-gray-600">
-            Click your way to verifiable digital points
+          <p className="text-base text-gray-600 max-w-sm mx-auto leading-relaxed">
+            🎯 Click your way to verifiable digital points on the blockchain
           </p>
         </div>
 
         {/* Wallet Connection */}
-        <div className="mb-8 flex justify-center">
-          <ConnectButton />
+        <div className="mb-10 flex justify-center">
+          <div className="transform transition-all duration-200 hover:scale-105">
+            <ConnectButton />
+          </div>
         </div>
 
         {isConnected && address ? (
-          <div className="space-y-6">
+          <div className="space-y-8">
             
             {/* Stats Display */}
             <StatsDisplay userStats={userStats} />
@@ -180,11 +187,21 @@ function App() {
 
             {/* Last Transaction */}
             {lastTxHash && (
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">Latest Transaction:</p>
-                <code className="text-xs bg-gray-100 px-2 py-1 rounded break-all">
-                  {lastTxHash}
-                </code>
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 shadow-sm">
+                <div className="text-center">
+                  <div className="inline-flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <p className="text-sm font-semibold text-gray-700">Latest Transaction</p>
+                  </div>
+                  <div className="bg-gray-100 rounded-xl p-3 border">
+                    <code className="text-xs text-gray-600 break-all font-mono">
+                      {lastTxHash}
+                    </code>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    ✅ Successfully recorded on blockchain
+                  </p>
+                </div>
               </div>
             )}
 
@@ -193,14 +210,26 @@ function App() {
             
           </div>
         ) : (
-          <div className="text-center py-12">
-            <AlertTriangle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-10 border border-gray-200 shadow-lg text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl mb-6">
+              <AlertTriangle className="h-10 w-10 text-blue-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
               Connect Your Wallet
             </h3>
-            <p className="text-gray-600 max-w-sm mx-auto">
-              Connect your Ethereum wallet to start generating Shmoo points and track your clicking progress.
+            <p className="text-gray-600 max-w-md mx-auto leading-relaxed mb-6">
+              🔗 Connect your Ethereum wallet to start generating Shmoo points and track your clicking progress on the blockchain.
             </p>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Secure & Non-custodial</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Works with MetaMask, Coinbase & more</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
