@@ -6,6 +6,9 @@ import DisclaimerBanner from './components/DisclaimerBanner';
 import ShmooButton from './components/ShmooButton';
 import StatsDisplay from './components/StatsDisplay';
 import TransactionHistory from './components/TransactionHistory';
+import TransactionStatus, { type TransactionState } from './components/TransactionStatus';
+import { blockchainService } from './services/blockchainService';
+import type { Hash, Address } from 'viem';
 
 interface UserStats {
   totalClicks: number;
@@ -35,6 +38,9 @@ function App() {
   const [shmooPoints, setShmooPoints] = useState<ShmooPoint[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastTxHash, setLastTxHash] = useState<string>('');
+  const [transactionState, setTransactionState] = useState<TransactionState>('idle');
+  const [transactionError, setTransactionError] = useState<string>('');
+  const [networkInfo, setNetworkInfo] = useState(blockchainService.getNetworkInfo());
 
   // Load user data from localStorage
   useEffect(() => {
@@ -88,58 +94,78 @@ function App() {
     }
   };
 
-  // Generate Shmoo Point
+  // Generate Shmoo Point with real blockchain integration
   const generateShmooPoint = async () => {
     if (!address || !walletClient || isGenerating) return;
 
     setIsGenerating(true);
+    setTransactionState('pending');
+    setTransactionError('');
     
     try {
-      // Simulate transaction creation
-      const mockTxHash = `0x${Math.random().toString(16).substring(2)}${Math.random().toString(16).substring(2)}`;
-      const timestamp = Date.now();
+      // Generate Shmoo point on-chain
+      const txHash = await blockchainService.generateShmooPoint(walletClient);
+      setLastTxHash(txHash);
       
-      // Create new Shmoo point
-      const newPoint: ShmooPoint = {
-        pointId: `${mockTxHash}_0`,
-        userAddress: address,
-        timestamp,
-        txHash: mockTxHash
-      };
+      // Wait for transaction confirmation
+      const isConfirmed = await blockchainService.waitForTransaction(txHash);
+      
+      if (isConfirmed) {
+        setTransactionState('confirmed');
+        
+        // Update local state after successful transaction
+        const timestamp = Date.now();
+        const newPoint: ShmooPoint = {
+          pointId: `${txHash}_0`,
+          userAddress: address,
+          timestamp,
+          txHash
+        };
 
-      // Update stats
-      const newDailyClicks = calculateDailyClicks(userStats.lastClickTimestamp);
-      const currentStreak = calculateStreak(userStats.lastClickTimestamp);
-      const newStreak = userStats.lastClickTimestamp > 0 && 
-        Math.floor((timestamp - userStats.lastClickTimestamp) / (1000 * 60 * 60 * 24)) <= 1 
-        ? currentStreak + 1 
-        : 1;
+        // Update stats
+        const newDailyClicks = calculateDailyClicks(userStats.lastClickTimestamp);
+        const currentStreak = calculateStreak(userStats.lastClickTimestamp);
+        const newStreak = userStats.lastClickTimestamp > 0 && 
+          Math.floor((timestamp - userStats.lastClickTimestamp) / (1000 * 60 * 60 * 24)) <= 1 
+          ? currentStreak + 1 
+          : 1;
 
-      const newStats: UserStats = {
-        totalClicks: userStats.totalClicks + 1,
-        streakCount: newStreak,
-        lastClickTimestamp: timestamp,
-        dailyClicks: newDailyClicks
-      };
+        const newStats: UserStats = {
+          totalClicks: userStats.totalClicks + 1,
+          streakCount: newStreak,
+          lastClickTimestamp: timestamp,
+          dailyClicks: newDailyClicks
+        };
 
-      const newPoints = [newPoint, ...shmooPoints];
+        const newPoints = [newPoint, ...shmooPoints];
 
-      // Update state
-      setUserStats(newStats);
-      setShmooPoints(newPoints);
-      setLastTxHash(mockTxHash);
+        // Update state
+        setUserStats(newStats);
+        setShmooPoints(newPoints);
 
-      // Save to localStorage
-      saveUserData(newStats, newPoints);
+        // Save to localStorage
+        saveUserData(newStats, newPoints);
+        
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => setTransactionState('idle'), 3000);
+      } else {
+        setTransactionState('failed');
+        setTransactionError('Transaction failed to confirm on the blockchain.');
+      }
 
-      // Simulate transaction delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating Shmoo point:', error);
+      setTransactionState('failed');
+      setTransactionError(error.message || 'Failed to generate Shmoo point. Please try again.');
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // Retry failed transaction
+  const retryTransaction = () => {
+    setTransactionState('idle');
+    generateShmooPoint();
   };
 
   return (
@@ -168,8 +194,22 @@ function App() {
         {isConnected && address ? (
           <div className="space-y-6">
             
+            {/* Network Info */}
+            <div className="text-center text-xs text-gray-500 mb-4">
+              Connected to {networkInfo.name} • Contract: {networkInfo.contractAddress.slice(0, 6)}...{networkInfo.contractAddress.slice(-4)}
+            </div>
+            
             {/* Stats Display */}
             <StatsDisplay userStats={userStats} />
+            
+            {/* Transaction Status */}
+            <TransactionStatus
+              state={transactionState}
+              txHash={lastTxHash}
+              error={transactionError}
+              explorerUrl={networkInfo.explorerUrl}
+              onRetry={retryTransaction}
+            />
             
             {/* Shmoo Button */}
             <ShmooButton 
@@ -177,16 +217,6 @@ function App() {
               isGenerating={isGenerating}
               disabled={!walletClient}
             />
-
-            {/* Last Transaction */}
-            {lastTxHash && (
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">Latest Transaction:</p>
-                <code className="text-xs bg-gray-100 px-2 py-1 rounded break-all">
-                  {lastTxHash}
-                </code>
-              </div>
-            )}
 
             {/* Transaction History */}
             <TransactionHistory points={shmooPoints.slice(0, 5)} />
