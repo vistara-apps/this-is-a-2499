@@ -26,24 +26,48 @@ jobs:
       run: npm run build
       env:
         NODE_OPTIONS: --max-old-space-size=4096
+
+    - name: Check Vercel secrets
+      run: |
+        if [ -z "${{ secrets.VERCEL_TOKEN }}" ] || [ -z "${{ secrets.VERCEL_ORG_ID }}" ] || [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+          echo "⚠️ Warning: Vercel deployment secrets are not configured."
+          echo "Please configure the following secrets in your repository:"
+          echo "- VERCEL_TOKEN"
+          echo "- VERCEL_ORG_ID" 
+          echo "- VERCEL_PROJECT_ID"
+          echo "Deployment will be skipped."
+          echo "VERCEL_SECRETS_MISSING=true" >> $GITHUB_ENV
+        else
+          echo "✅ Vercel secrets are configured."
+          echo "VERCEL_SECRETS_MISSING=false" >> $GITHUB_ENV
+        fi
         
     - name: Deploy to Vercel (Production)
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && env.VERCEL_SECRETS_MISSING == 'false'
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
         vercel-args: '--prod'
         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./
         
     - name: Deploy to Vercel (Preview)
-      if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master'
+      if: (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master') && env.VERCEL_SECRETS_MISSING == 'false'
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
         vercel-args: '--no-wait'
         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./
+
+    - name: Skip deployment notice
+      if: env.VERCEL_SECRETS_MISSING == 'true'
+      run: |
+        echo "🚫 Vercel deployment skipped due to missing secrets."
+        echo "The application built successfully but cannot be deployed to Vercel."
+        echo "To enable deployment, please configure the required Vercel secrets in your repository settings."
         
     - name: Comment PR with deployment URL
       if: github.event_name == 'pull_request'
