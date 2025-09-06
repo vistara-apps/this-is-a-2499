@@ -18,6 +18,78 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Enhanced Shmoo Button Styles */
+.shmoo-button-enhanced {
+  transition: all 0.2s ease-out;
+  position: relative;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.shmoo-button-enhanced:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.shmoo-button-enhanced:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Shimmer animation for button */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Floating number animation */
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(1.2);
+  }
+}
+
+.animate-float-up {
+  animation: floatUp 1s ease-out forwards;
+}
+
+/* Pulse glow effect */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.8);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
+
+/* Stats card hover effects */
+.stat-card {
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Legacy button styles (keeping for compatibility) */
 .shmoo-button {
   transition: all 0.2s ease-in-out;
 }
